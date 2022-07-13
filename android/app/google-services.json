@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "313239994287",
+    "project_id": "nandu-c5987",
+    "storage_bucket": "nandu-c5987.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:313239994287:android:9f4c3a308d99d025e7795a",
+        "android_client_info": {
+          "package_name": "com.example.nandu"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "313239994287-h50ktqqj46d2hcb7498eslo4s6e67sdp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCg3aADq1FvNML6LcyY4crLddM2IW1Vk0c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "313239994287-h50ktqqj46d2hcb7498eslo4s6e67sdp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
