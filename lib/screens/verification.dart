@@ -5,13 +5,22 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nandu/controllers/controller.dart';
+import 'package:nandu/screens/home.dart';
 import 'package:nandu/screens/signIn.dart';
-import 'package:otp_text_field/otp_field.dart';
-import 'package:otp_text_field/otp_text_field.dart';
-import 'package:otp_text_field/style.dart';
+import 'package:pinput/pinput.dart';
 
 class Verification extends StatefulWidget {
-  const Verification({Key? key}) : super(key: key);
+  String username;
+  String emailAddress;
+  String phoneNumber;
+  String password;
+  Verification({
+    Key? key,
+    required this.username,
+    required this.emailAddress,
+    required this.phoneNumber,
+    required this.password,
+  }) : super(key: key);
 
   @override
   State<Verification> createState() => _VerificationState();
@@ -19,13 +28,17 @@ class Verification extends StatefulWidget {
 
 class _VerificationState extends State<Verification> {
   FirebaseAuth auth = FirebaseAuth.instance;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Controller controller = Get.put(Controller());
-  OtpFieldController otpController = OtpFieldController();
+  // OtpFieldController otpController = OtpFieldController();
+  TextEditingController otpController = TextEditingController();
+  String _verificationCode = '';
   late Timer? countDownTimer;
   Duration timerDuration = const Duration(seconds: 31);
   int seconds = 31;
   @override
   void initState() {
+    _verifyPhoneNumber();
     startTimer();
     super.initState();
   }
@@ -70,8 +83,6 @@ class _VerificationState extends State<Verification> {
     final double screenHeight = MediaQuery.of(context).size.height;
     final double screenWidth = MediaQuery.of(context).size.width;
     final double height10 = screenHeight / 78;
-    String strDigit(int n) => n.toString().padLeft(2, '0');
-    // final seconds = strDigit(timerDuration.inSeconds.remainder(60));
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -124,21 +135,78 @@ class _VerificationState extends State<Verification> {
                   ),
                 ),
                 SizedBox(height: height10 * 0.8),
-                OTPTextField(
+                Pinput(
                   length: 6,
-                  onChanged: (val) {},
-                  fieldWidth: 45,
-                  width: screenWidth,
-                  textFieldAlignment: MainAxisAlignment.start,
                   controller: otpController,
-                  spaceBetween: 10,
-                  fieldStyle: FieldStyle.box,
-                  outlineBorderRadius: 0,
-                  style: TextStyle(
-                    fontSize: height10 * 1.5,
-                    color: const Color(0xFFC2C2C2),
+                  onSubmitted: (pin) async {
+                    try {
+                      await FirebaseAuth.instance
+                          .signInWithCredential(
+                        PhoneAuthProvider.credential(
+                          verificationId: _verificationCode,
+                          smsCode: pin,
+                        ),
+                      )
+                          .then((value) async {
+                        if (value.user != null) {
+                          log("Pass to home");
+                          Get.offAll(() => const Home());
+                        }
+                      });
+                    } catch (e) {
+                      FocusScope.of(context).unfocus();
+                      _scaffoldKey.currentState!.showSnackBar(
+                        const SnackBar(
+                          content: Text("Invalid OTP"),
+                        ),
+                      );
+                    }
+                  },
+                  defaultPinTheme: PinTheme(
+                    width: height10 * 4.5,
+                    height: height10 * 4.5,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        width: height10 * 0.1,
+                        color: const Color(0xFFC2C2C2),
+                      ),
+                    ),
+                    textStyle: TextStyle(
+                      fontSize: height10 * 1.5,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                  focusedPinTheme: PinTheme(
+                    width: height10 * 4.5,
+                    height: height10 * 4.5,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          width: height10 * 0.1,
+                          color: const Color(0xFF00880D)),
+                    ),
+                    textStyle: TextStyle(
+                      fontSize: height10 * 1.5,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w300,
+                    ),
                   ),
                 ),
+                // OTPTextField(
+                //   length: 6,
+                //   onChanged: (val) {},
+                //   fieldWidth: 45,
+                //   width: screenWidth,
+                //   textFieldAlignment: MainAxisAlignment.start,
+                //   controller: otpController,
+                //   spaceBetween: 10,
+                //   fieldStyle: FieldStyle.box,
+                //   outlineBorderRadius: 0,
+                //   style: TextStyle(
+                //     fontSize: height10 * 1.5,
+                //     color: const Color(0xFFC2C2C2),
+                //   ),
+                // ),
                 SizedBox(height: height10 * 2),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,37 +224,7 @@ class _VerificationState extends State<Verification> {
                         if (seconds == 0) {
                           resetTimer();
                           startTimer();
-                          auth.verifyPhoneNumber(
-                            phoneNumber:
-                                "+91 ${controller.phoneNumber.toString()}",
-                            verificationCompleted:
-                                (PhoneAuthCredential credential) async {
-                              await auth
-                                  .signInWithCredential(credential)
-                                  .then((value) {
-                                log("User signed in SUCCESSFULLY");
-                              });
-                            },
-                            verificationFailed:
-                                (FirebaseAuthException exception) {
-                              Get.snackbar(
-                                "Exception",
-                                exception.message.toString(),
-                                colorText: Colors.white,
-                                duration: const Duration(seconds: 2),
-                                backgroundColor: const Color(0xFF00880D),
-                              );
-                              log("The number is : ${controller.phoneNumber}");
-                              log(exception.message.toString());
-                            },
-                            codeSent:
-                                (String verificationID, int? resendToken) {
-                              controller.verificationIDRecieved =
-                                  verificationID;
-                            },
-                            codeAutoRetrievalTimeout:
-                                (String verificationID) {},
-                          );
+                          _verifyPhoneNumber();
                         }
                       },
                       child: Text(
@@ -260,6 +298,37 @@ class _VerificationState extends State<Verification> {
           ],
         ),
       ),
+    );
+  }
+
+  _verifyPhoneNumber() async {
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: "+91 ${widget.phoneNumber}",
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        await FirebaseAuth.instance
+            .signInWithCredential(credential)
+            .then((value) async {
+          if (value.user != null) {
+            log("User logged In");
+            Get.offAll(() => const Home());
+          }
+        });
+      },
+      verificationFailed: (FirebaseAuthException exception) {
+        log(exception.toString());
+        log(widget.phoneNumber);
+      },
+      codeSent: (verificationID, resendToken) {
+        setState(() {
+          _verificationCode = verificationID;
+        });
+      },
+      codeAutoRetrievalTimeout: (verificationID) {
+        setState(() {
+          _verificationCode = verificationID;
+        });
+      },
+      timeout: const Duration(seconds: 120),
     );
   }
 }

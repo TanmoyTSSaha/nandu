@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
@@ -310,8 +309,14 @@ class _SignUpState extends State<SignUp> {
                       minimumSize: Size(double.infinity, height10 * 4.8)),
                   onPressed: () {
                     if (signUpFormKey.currentState!.validate()) {
-                      verifyNumber();
-                      Get.to(() => const Verification());
+                      Get.to(
+                        () => Verification(
+                          emailAddress: emailAddressController.text,
+                          password: passwordController.text,
+                          phoneNumber: phoneNumberController.text,
+                          username: usernameController.text,
+                        ),
+                      );
                     }
                   },
                   child: Text(
@@ -355,34 +360,6 @@ class _SignUpState extends State<SignUp> {
           ),
         ),
       ),
-    );
-  }
-
-  void verifyNumber() {
-    controller.phoneNumber = phoneNumberController.text;
-    // controller.phoneNumber = phoneNumberController as RxString;
-    auth.verifyPhoneNumber(
-      phoneNumber: "+91 ${phoneNumberController.toString()}040",
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        await auth.signInWithCredential(credential).then((value) {
-          log("User signed in SUCCESSFULLY");
-        });
-      },
-      verificationFailed: (FirebaseAuthException exception) {
-        Get.snackbar(
-          "Exception",
-          exception.message.toString(),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-          backgroundColor: const Color(0xFF00880D),
-        );
-        log(exception.message.toString());
-        log("The number is : ${controller.phoneNumber.toString()}");
-      },
-      codeSent: (String verificationID, int? resendToken) {
-        controller.verificationIDRecieved = verificationID;
-      },
-      codeAutoRetrievalTimeout: (String verificationID) {},
     );
   }
 }

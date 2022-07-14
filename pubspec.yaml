@@ -37,8 +37,7 @@ dependencies:
   google_fonts: ^3.0.1
   get: ^4.6.5
   flutter_svg: ^1.1.1+1
-  otp_text_field: ^1.1.3
-  email_validator: ^2.0.1
+  pinput: ^2.2.11
   firebase_core: ^1.19.1
   firebase_auth: ^3.4.1
   cloud_firestore: ^3.2.1
