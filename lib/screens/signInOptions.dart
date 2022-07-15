@@ -288,26 +288,34 @@ class _SignInOptionsState extends State<SignInOptions> {
     );
   }
 
-  Future<UserCredential> signInWithFacebook() async {
-    // This trigger the sign in flow.
-    final LoginResult loginResult =
-        await FacebookAuth.instance.login(permissions: [
-      'email',
-      'public_profile',
-    ]);
+  signInWithFacebook() async {
+    try {
+      // This trigger the sign in flow.
+      final LoginResult loginResult =
+          await FacebookAuth.instance.login(permissions: [
+        'email',
+        'public_profile',
+      ]);
 
-    // To create a credential from the access token.
-    final OAuthCredential facebookAuthCredential =
-        FacebookAuthProvider.credential(loginResult.accessToken!.token);
+      // To create a credential from the access token.
+      final OAuthCredential facebookAuthCredential =
+          FacebookAuthProvider.credential(loginResult.accessToken!.token);
 
-    final userData = await FacebookAuth.instance.getUserData();
-    log(userData.toString());
+      final userData = await FacebookAuth.instance.getUserData();
+      log(userData.toString());
 
-    facebookEmail = userData['email'];
-    facebookName = userData['public_profile']['name'];
+      facebookEmail = userData['email'];
+      facebookName = userData['name'];
 
-    //Once signed in return the UserCredential.
-    return FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+      //Once signed in return the UserCredential.
+      log("return : " +
+          FirebaseAuth.instance
+              .signInWithCredential(facebookAuthCredential)
+              .toString());
+      return FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+    } catch (e) {
+      log(" catch mathod of signInWithFacebook : " + e.toString());
+    }
   }
 
   signInWithGoogle() async {

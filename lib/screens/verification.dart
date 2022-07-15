@@ -123,7 +123,7 @@ class _VerificationState extends State<Verification> {
                   ),
                   SizedBox(height: height10),
                   Text(
-                    "Your verification OTP has been sent to +91123****890 number",
+                    "Your verification OTP has been sent to +91${widget.phoneNumber.toString().replaceRange(3, 6, "****")} number",
                     style: TextStyle(
                       fontSize: height10 * 1.4,
                       fontWeight: FontWeight.w400,

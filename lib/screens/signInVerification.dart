@@ -114,7 +114,7 @@ class _SignInVerificationState extends State<SignInVerification> {
                   ),
                   SizedBox(height: height10),
                   Text(
-                    "Your verification OTP has been sent to +91123****890 number",
+                    "Your verification OTP has been sent to +91${widget.phoneNumber.toString().replaceRange(3, 8, "****")} number",
                     style: TextStyle(
                       fontSize: height10 * 1.4,
                       fontWeight: FontWeight.w400,
@@ -221,20 +221,24 @@ class _SignInVerificationState extends State<SignInVerification> {
                             ),
                           )
                               .then((value) async {
-                            if (value.additionalUserInfo!.isNewUser) {
-                              Get.to(() => SignUp());
-                            }
+                            
                             if (value.user != null) {
-                              log("Pass to home");
+                              if (value.additionalUserInfo!.isNewUser) {
                               Get.snackbar(
                                 "New user",
                                 "Oops! Looks like you are a new user. You have to Sign Up first...",
                                 colorText: Colors.white,
                                 backgroundColor: const Color(0xFF00880D),
+                                duration: const Duration(seconds: 4),
                               );
+                              Get.to(() => const SignUp());
+                            } else {
+                              log("Pass to home");
                               setState(() {
                                 isOTPMatched = true;
                               });
+                            }
+                            
                             }
                           });
                         } catch (e) {

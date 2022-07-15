@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -33,9 +34,11 @@ class _HomeState extends State<Home> {
             Text("User ID : $uid"),
             ElevatedButton(
                 onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  await GoogleSignIn().signOut();
-                  await FacebookAuth.instance.logOut();
+                  setState(() async {
+                    await FirebaseAuth.instance.signOut();
+                    await GoogleSignIn().signOut();
+                    await FacebookAuth.instance.logOut();
+                  });
                 },
                 child: const Text("Sign Out"))
           ],

@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">Flutter Firebase Auth Practices</string>
-    <string name="facebook_app_id">1244338799670934</string>
-    <string name="fb_login_protocol_scheme">fb1234</string>
-    <string name="facebook_client_token">3a06a63e416b5a00b744b656f4026dd9</string>
+    <string name="app_name">Nandu - Test1</string>
+    <string name="facebook_app_id">538547968005692</string>
+    <string name="fb_login_protocol_scheme">fb538547968005692</string>
+    <string name="facebook_client_token">11848b988e93cb9bbfd379aa6d0e3600</string>
 </resources>
