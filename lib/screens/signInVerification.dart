@@ -1,33 +1,24 @@
 import 'dart:async';
 import 'dart:developer';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nandu/controllers/controller.dart';
 import 'package:nandu/screens/home.dart';
-import 'package:nandu/screens/signIn.dart';
+import 'package:nandu/screens/signUp.dart';
 import 'package:pinput/pinput.dart';
 
-class Verification extends StatefulWidget {
-  String username;
-  String emailAddress;
+class SignInVerification extends StatefulWidget {
   String phoneNumber;
-  String password;
-  Verification({
-    Key? key,
-    required this.username,
-    required this.emailAddress,
-    required this.phoneNumber,
-    required this.password,
-  }) : super(key: key);
+  SignInVerification({Key? key, required this.phoneNumber}) : super(key: key);
 
   @override
-  State<Verification> createState() => _VerificationState();
+  State<SignInVerification> createState() => _SignInVerificationState();
 }
 
-class _VerificationState extends State<Verification> {
+class _SignInVerificationState extends State<SignInVerification> {
   FirebaseAuth auth = FirebaseAuth.instance;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Controller controller = Get.put(Controller());
@@ -143,7 +134,9 @@ class _VerificationState extends State<Verification> {
                   Pinput(
                     length: 6,
                     controller: otpController,
-                    onSubmitted: (pin) async {},
+                    // onSubmitted: (pin) async {
+
+                    // },
                     defaultPinTheme: PinTheme(
                       width: height10 * 4.5,
                       height: height10 * 4.5,
@@ -174,21 +167,6 @@ class _VerificationState extends State<Verification> {
                       ),
                     ),
                   ),
-                  // OTPTextField(
-                  //   length: 6,
-                  //   onChanged: (val) {},
-                  //   fieldWidth: 45,
-                  //   width: screenWidth,
-                  //   textFieldAlignment: MainAxisAlignment.start,
-                  //   controller: otpController,
-                  //   spaceBetween: 10,
-                  //   fieldStyle: FieldStyle.box,
-                  //   outlineBorderRadius: 0,
-                  //   style: TextStyle(
-                  //     fontSize: height10 * 1.5,
-                  //     color: const Color(0xFFC2C2C2),
-                  //   ),
-                  // ),
                   SizedBox(height: height10 * 2),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -244,14 +222,16 @@ class _VerificationState extends State<Verification> {
                           )
                               .then((value) async {
                             if (value.additionalUserInfo!.isNewUser) {
-                              _storeData();
-                              setState(() {
-                                isOTPMatched = true;
-                              });
+                              Get.to(() => SignUp());
                             }
-                            if (value.user != null &&
-                                !value.additionalUserInfo!.isNewUser) {
+                            if (value.user != null) {
                               log("Pass to home");
+                              Get.snackbar(
+                                "New user",
+                                "Oops! Looks like you are a new user. You have to Sign Up first...",
+                                colorText: Colors.white,
+                                backgroundColor: const Color(0xFF00880D),
+                              );
                               setState(() {
                                 isOTPMatched = true;
                               });
@@ -270,7 +250,7 @@ class _VerificationState extends State<Verification> {
                         }
                       },
                       child: Text(
-                        "Sign Up",
+                        "Sign In",
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -297,7 +277,7 @@ class _VerificationState extends State<Verification> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Get.to(() => const SignIn());
+                                Get.to(() => const SignUp());
                               },
                           ),
                         ],
@@ -313,18 +293,6 @@ class _VerificationState extends State<Verification> {
     );
   }
 
-  _storeData() async {
-    await FirebaseFirestore.instance
-        .collection("users")
-        .doc(FirebaseAuth.instance.currentUser!.uid)
-        .set({
-      'uid': FirebaseAuth.instance.currentUser!.uid,
-      'username': widget.username.toString(),
-      'emailAddress': widget.emailAddress.toString(),
-      'phoneNumber': widget.phoneNumber.toString(),
-    });
-  }
-
   _verifyPhoneNumber() async {
     await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: "+91 ${widget.phoneNumber}",
@@ -335,7 +303,6 @@ class _VerificationState extends State<Verification> {
           if (value.user != null) {
             log("User logged In");
             setState(() {
-              _storeData();
               isOTPMatched = true;
             });
           }

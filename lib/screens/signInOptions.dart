@@ -1,8 +1,13 @@
 import 'dart:developer';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:nandu/screens/home.dart';
 import 'package:nandu/screens/signIn.dart';
 import 'package:nandu/screens/signUp.dart';
 import 'package:nandu/screens/termsConditions.dart';
@@ -15,6 +20,9 @@ class SignInOptions extends StatefulWidget {
 }
 
 class _SignInOptionsState extends State<SignInOptions> {
+  String facebookEmail = '';
+  String facebookNumber = '';
+  String facebookName = '';
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
@@ -144,7 +152,26 @@ class _SignInOptionsState extends State<SignInOptions> {
                             color: const Color(0xFFE0E0E0),
                           ),
                           minimumSize: Size(height10 * 33.5, height10 * 4.8)),
-                      onPressed: () {},
+                      onPressed: () async {
+                        log("Log in with Google TAPPED!");
+                        signInWithGoogle();
+                        await FirebaseFirestore.instance
+                            .collection("users")
+                            .doc(FirebaseAuth.instance.currentUser!.uid)
+                            .set({
+                          'uid': FirebaseAuth.instance.currentUser!.uid,
+                          'username': FirebaseAuth
+                              .instance.currentUser!.displayName
+                              .toString(),
+                          'emailAddress': FirebaseAuth
+                              .instance.currentUser!.email
+                              .toString(),
+                          'phoneNumber': FirebaseAuth
+                              .instance.currentUser!.phoneNumber
+                              .toString(),
+                        });
+                        Get.offAll(() => const Home());
+                      },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
@@ -172,7 +199,21 @@ class _SignInOptionsState extends State<SignInOptions> {
                           primary: const Color(0xFF4B67AD),
                           elevation: 0.0,
                           minimumSize: Size(height10 * 33.5, height10 * 4.8)),
-                      onPressed: () {},
+                      onPressed: () async {
+                        log("Facebook Login TAPPED!");
+                        signInWithFacebook();
+                        await FirebaseFirestore.instance
+                            .collection("users")
+                            .doc(FirebaseAuth.instance.currentUser!.uid)
+                            .set({
+                          'uid':
+                              FirebaseAuth.instance.currentUser!.uid.toString(),
+                          'emailAddress': facebookEmail.toString(),
+                          'name': facebookName.toString(),
+                          'phoneNumber': null,
+                        });
+                        Get.offAll(() => const Home());
+                      },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
@@ -245,5 +286,50 @@ class _SignInOptionsState extends State<SignInOptions> {
         ),
       ),
     );
+  }
+
+  Future<UserCredential> signInWithFacebook() async {
+    // This trigger the sign in flow.
+    final LoginResult loginResult =
+        await FacebookAuth.instance.login(permissions: [
+      'email',
+      'public_profile',
+    ]);
+
+    // To create a credential from the access token.
+    final OAuthCredential facebookAuthCredential =
+        FacebookAuthProvider.credential(loginResult.accessToken!.token);
+
+    final userData = await FacebookAuth.instance.getUserData();
+    log(userData.toString());
+
+    facebookEmail = userData['email'];
+    facebookName = userData['public_profile']['name'];
+
+    //Once signed in return the UserCredential.
+    return FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+  }
+
+  signInWithGoogle() async {
+    try {
+      log("signInWithGoogle Initialized");
+      //Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      //Obtain the auth details from the request.
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser!.authentication;
+
+      //Create a new credential.
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      //Once signed in, return to the UserCredential.
+      return await FirebaseAuth.instance.signInWithCredential(credential);
+    } catch (e) {
+      log(e.toString());
+    }
   }
 }
