@@ -3,9 +3,11 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
-import 'package:nandu/screens/home.dart';
-import 'package:nandu/screens/splashScreen.dart';
+import 'package:nandu/screens/local_lock_screen.dart';
+import 'package:nandu/screens/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+
+import 'screens/home.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,14 +23,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Nandu',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        textTheme: GoogleFonts.poppinsTextTheme(),
-      ),
-      home: const SplashScreen(),
-    );
+    return StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, AsyncSnapshot<User?> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          }
+          return GetMaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Nandu',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              textTheme: GoogleFonts.poppinsTextTheme(),
+            ),
+            home: LocalLockScreen(),//snapshot.data != null ? const Home() : const SplashScreen(),
+          );
+        });
   }
 }

@@ -1,31 +1,20 @@
-import 'dart:developer';
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:nandu/controllers/controller.dart';
-import 'package:nandu/screens/signIn.dart';
-import 'package:nandu/screens/verification.dart';
+import 'package:nandu/screens/sign_in_verification.dart';
+import 'package:nandu/screens/sign_up.dart';
 
-class SignUp extends StatefulWidget {
-  const SignUp({Key? key}) : super(key: key);
+class SignInWithOTP extends StatefulWidget {
+  const SignInWithOTP({Key? key}) : super(key: key);
 
   @override
-  State<SignUp> createState() => _SignUpState();
+  State<SignInWithOTP> createState() => _SignInWithOTPState();
 }
 
-class _SignUpState extends State<SignUp> {
-  GlobalKey<FormState> signUpFormKey = GlobalKey<FormState>();
-  FirebaseAuth auth = FirebaseAuth.instance;
-
-  TextEditingController usernameController = TextEditingController();
-  TextEditingController emailAddressController = TextEditingController();
+class _SignInWithOTPState extends State<SignInWithOTP> {
+  GlobalKey<FormState> signInFormormKey = GlobalKey<FormState>();
   TextEditingController phoneNumberController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
-  Controller controller = Get.put(Controller());
   bool showPassword = false;
   @override
   Widget build(BuildContext context) {
@@ -54,11 +43,10 @@ class _SignUpState extends State<SignUp> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-            padding: EdgeInsets.all(height10 * 2),
+            padding: EdgeInsets.symmetric(horizontal: height10 * 2.0),
             child: Form(
-              key: signUpFormKey,
+              key: signInFormormKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -78,114 +66,7 @@ class _SignUpState extends State<SignUp> {
                       color: const Color(0xFF9E9E9E),
                     ),
                   ),
-                  SizedBox(height: height10 * 4 > 10 ? 10 : height10 * 4),
-                  Text(
-                    "Username",
-                    style: TextStyle(
-                      fontSize: height10 * 1.2,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF9E9E9E),
-                    ),
-                  ),
-                  SizedBox(height: height10 * 0.8),
-                  TextFormField(
-                    controller: usernameController,
-                    validator: (username) {
-                      if (username!.isEmpty) {
-                        return "Username cannot be empty!";
-                      } else {
-                        return null;
-                      }
-                    },
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.person_rounded,
-                        color: Color(0xFFC2C2C2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          width: height10 * 0.1,
-                          color: Colors.red,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          width: height10 * 0.1,
-                          color: const Color(0xFFEDEDED),
-                        ),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          width: height10 * 0.1,
-                          color: const Color(0xFFEDEDED),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          width: height10 * 0.1,
-                          color: const Color(0xFFEDEDED),
-                        ),
-                      ),
-                      hintText: " Enter your username",
-                      hintStyle: TextStyle(
-                        fontSize: height10 * 1.5,
-                        color: const Color(0xFFC2C2C2),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: height10 * 2),
-                  Text(
-                    "Email",
-                    style: TextStyle(
-                      fontSize: height10 * 1.2,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF9E9E9E),
-                    ),
-                  ),
-                  SizedBox(height: height10 * 0.8),
-                  TextFormField(
-                    controller: emailAddressController,
-                    validator: (email) {
-                      if (email!.isEmpty) {
-                        return "Email cannot be empty";
-                      } else {
-                        return null;
-                      }
-                    },
-                    keyboardType: TextInputType.emailAddress,
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.email_rounded,
-                        color: Color(0xFFC2C2C2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          width: height10 * 0.1,
-                          color: Colors.red,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          width: height10 * 0.1,
-                          color: const Color(0xFFEDEDED),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          width: height10 * 0.1,
-                          color: const Color(0xFFEDEDED),
-                        ),
-                      ),
-                      hintText: " Enter your email",
-                      hintStyle: TextStyle(
-                        fontSize: height10 * 1.5,
-                        color: const Color(0xFFC2C2C2),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: height10 * 2),
+                  SizedBox(height: height10 * 4),
                   Text(
                     "Mobile number",
                     style: TextStyle(
@@ -196,7 +77,6 @@ class _SignUpState extends State<SignUp> {
                   ),
                   SizedBox(height: height10 * 0.8),
                   TextFormField(
-                    controller: phoneNumberController,
                     validator: (phoneNumber) {
                       if (phoneNumber!.isEmpty) {
                         return "Mobile number cannot be empty";
@@ -207,20 +87,13 @@ class _SignUpState extends State<SignUp> {
                         return null;
                       }
                     },
-                    maxLength: 10,
+                    controller: phoneNumberController,
                     keyboardType: TextInputType.number,
                     autocorrect: false,
                     decoration: InputDecoration(
-                      counterText: '',
                       prefixIcon: const Icon(
                         Icons.phone_android_rounded,
                         color: Color(0xFFC2C2C2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          width: height10 * 0.1,
-                          color: Colors.red,
-                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
@@ -234,7 +107,7 @@ class _SignUpState extends State<SignUp> {
                           color: const Color(0xFFEDEDED),
                         ),
                       ),
-                      hintText: " Enter mobile number",
+                      hintText: " Enter your mobile number",
                       hintStyle: TextStyle(
                         fontSize: height10 * 1.5,
                         color: const Color(0xFFC2C2C2),
@@ -279,12 +152,6 @@ class _SignUpState extends State<SignUp> {
                   //           ? const Icon(CupertinoIcons.eye)
                   //           : const Icon(CupertinoIcons.eye_slash),
                   //     ),
-                  //     errorBorder: OutlineInputBorder(
-                  //       borderSide: BorderSide(
-                  //         width: height10 * 0.1,
-                  //         color: Colors.red,
-                  //       ),
-                  //     ),
                   //     focusedBorder: OutlineInputBorder(
                   //       borderSide: BorderSide(
                   //         width: height10 * 0.1,
@@ -304,26 +171,34 @@ class _SignUpState extends State<SignUp> {
                   //     ),
                   //   ),
                   // ),
-                  SizedBox(height: height10 * 17),
+                  // SizedBox(height: height10),
+                  // Align(
+                  //   alignment: Alignment.centerRight,
+                  //   child: TextButton(
+                  //     onPressed: () {},
+                  //     child: Text(
+                  //       "Forgot Password?",
+                  //       style: TextStyle(
+                  //           fontSize: height10 * 1.2,
+                  //           fontWeight: FontWeight.w400,
+                  //           color: const Color(0xFF00880D)),
+                  //     ),
+                  //   ),
+                  // ),
+                  SizedBox(height: height10 * 40),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                         primary: const Color(0xFF00880D),
                         elevation: 0.0,
                         minimumSize: Size(double.infinity, height10 * 4.8)),
                     onPressed: () {
-                      if (signUpFormKey.currentState!.validate()) {
-                        Get.to(
-                          () => Verification(
-                            emailAddress: emailAddressController.text,
-                            password: passwordController.text,
-                            phoneNumber: phoneNumberController.text,
-                            username: usernameController.text,
-                          ),
-                        );
+                      if (signInFormormKey.currentState!.validate()) {
+                        Get.to(() => SignInVerification(
+                            phoneNumber: phoneNumberController.text));
                       }
                     },
                     child: Text(
-                      "Sign Up",
+                      "Sign In",
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
@@ -335,7 +210,7 @@ class _SignUpState extends State<SignUp> {
                   Center(
                     child: RichText(
                       text: TextSpan(
-                        text: "Already have a account ? ",
+                        text: "Don’t have an account ? ",
                         style: TextStyle(
                           fontSize: height10 * 1.2,
                           fontWeight: FontWeight.w300,
@@ -343,15 +218,16 @@ class _SignUpState extends State<SignUp> {
                         ),
                         children: [
                           TextSpan(
-                            text: "Sign In",
+                            text: "Register",
                             style: TextStyle(
                               fontSize: height10 * 1.2,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF00880D),
+                              decoration: TextDecoration.underline,
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Get.to(() => const SignIn());
+                                Get.to(() => const SignUp());
                               },
                           ),
                         ],

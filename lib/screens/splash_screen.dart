@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:nandu/authChecker.dart';
-import 'package:nandu/screens/signInOptions.dart';
+import 'package:nandu/auth_checker.dart';
+import 'package:nandu/screens/login.dart';
+import 'package:nandu/screens/sign_In_options.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -21,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen> {
       () => Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const AuthChecker(),
+          builder: (context) => const SignInOptions(),
         ),
       ),
     );

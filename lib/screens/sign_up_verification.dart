@@ -1,24 +1,34 @@
 import 'dart:async';
 import 'dart:developer';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nandu/Services/firebase_auth_config.dart';
 import 'package:nandu/controllers/controller.dart';
 import 'package:nandu/screens/home.dart';
-import 'package:nandu/screens/signUp.dart';
+import 'package:nandu/screens/sign_in_with_otp.dart';
 import 'package:pinput/pinput.dart';
 
-class SignInVerification extends StatefulWidget {
+class SignUpVerification extends StatefulWidget {
+  String username;
+  String emailAddress;
   String phoneNumber;
-  SignInVerification({Key? key, required this.phoneNumber}) : super(key: key);
+  String password;
+  SignUpVerification({
+    Key? key,
+    required this.username,
+    required this.emailAddress,
+    required this.phoneNumber,
+    required this.password,
+  }) : super(key: key);
 
   @override
-  State<SignInVerification> createState() => _SignInVerificationState();
+  State<SignUpVerification> createState() => _SignUpVerificationState();
 }
 
-class _SignInVerificationState extends State<SignInVerification> {
+class _SignUpVerificationState extends State<SignUpVerification> {
   FirebaseAuth auth = FirebaseAuth.instance;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Controller controller = Get.put(Controller());
@@ -114,7 +124,7 @@ class _SignInVerificationState extends State<SignInVerification> {
                   ),
                   SizedBox(height: height10),
                   Text(
-                    "Your verification OTP has been sent to +91${widget.phoneNumber.toString().replaceRange(3, 8, "****")} number",
+                    "Your verification OTP has been sent to +91${widget.phoneNumber.toString().replaceRange(3, 6, "****")} number",
                     style: TextStyle(
                       fontSize: height10 * 1.4,
                       fontWeight: FontWeight.w400,
@@ -134,9 +144,7 @@ class _SignInVerificationState extends State<SignInVerification> {
                   Pinput(
                     length: 6,
                     controller: otpController,
-                    // onSubmitted: (pin) async {
-
-                    // },
+                    onSubmitted: (pin) async {},
                     defaultPinTheme: PinTheme(
                       width: height10 * 4.5,
                       height: height10 * 4.5,
@@ -221,24 +229,16 @@ class _SignInVerificationState extends State<SignInVerification> {
                             ),
                           )
                               .then((value) async {
-                            
                             if (value.user != null) {
-                              if (value.additionalUserInfo!.isNewUser) {
-                              Get.snackbar(
-                                "New user",
-                                "Oops! Looks like you are a new user. You have to Sign Up first...",
-                                colorText: Colors.white,
-                                backgroundColor: const Color(0xFF00880D),
-                                duration: const Duration(seconds: 4),
-                              );
-                              Get.to(() => const SignUp());
-                            } else {
                               log("Pass to home");
+                              FirebaseAuthConfig().storeData(
+                                widget.username,
+                                widget.emailAddress,
+                                widget.phoneNumber,
+                              );
                               setState(() {
                                 isOTPMatched = true;
                               });
-                            }
-                            
                             }
                           });
                         } catch (e) {
@@ -254,37 +254,12 @@ class _SignInVerificationState extends State<SignInVerification> {
                         }
                       },
                       child: Text(
-                        "Sign In",
+                        "Submit",
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
                           fontSize: height10 * 1.5,
                         ),
-                      ),
-                    ),
-                    SizedBox(height: height10 * 2),
-                    RichText(
-                      text: TextSpan(
-                        text: "Already have a account ? ",
-                        style: TextStyle(
-                          fontSize: height10 * 1.2,
-                          fontWeight: FontWeight.w300,
-                          color: const Color(0xFFC2C2C2),
-                        ),
-                        children: [
-                          TextSpan(
-                            text: "Sign In",
-                            style: TextStyle(
-                              fontSize: height10 * 1.2,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF00880D),
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                Get.to(() => const SignUp());
-                              },
-                          ),
-                        ],
                       ),
                     ),
                   ],
@@ -317,14 +292,10 @@ class _SignInVerificationState extends State<SignInVerification> {
         log(widget.phoneNumber);
       },
       codeSent: (verificationID, resendToken) {
-        setState(() {
-          _verificationCode = verificationID;
-        });
+        _verificationCode = verificationID;
       },
       codeAutoRetrievalTimeout: (verificationID) {
-        setState(() {
-          _verificationCode = verificationID;
-        });
+        _verificationCode = verificationID;
       },
       timeout: const Duration(seconds: 120),
     );
