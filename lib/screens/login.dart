@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nandu/Services/firebase_auth_config.dart';
+import 'package:nandu/screens/forgot_password.dart';
 import 'package:nandu/screens/home.dart';
 import 'package:nandu/screens/sign_in_verification.dart';
 import 'package:nandu/screens/sign_up.dart';
@@ -176,7 +177,9 @@ class _LoginState extends State<Login> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Get.to(() => const ForgotPassword());
+                      },
                       child: Text(
                         "Forgot Password?",
                         style: TextStyle(

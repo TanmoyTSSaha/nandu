@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -96,6 +97,33 @@ class FirebaseAuthConfig {
       return FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
     } catch (e) {
       log(" catch mathod of signInWithFacebook : " + e.toString());
+    }
+  }
+
+  resetPassword(String email) async {
+    bool hasError = false;
+    try {
+      FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (exception) {
+      hasError = true;
+      if (exception.code == "user-not-found") {
+        Get.snackbar("User not found", "Please enter a valid email address!",
+            backgroundColor: Color(0xFF00880D), colorText: Colors.white);
+      } else if (exception.code == "invalid-email") {
+        Get.snackbar("Invalid Email", "Please enter a valid email address!",
+            backgroundColor: Color(0xFF00880D), colorText: Colors.white);
+      } else {
+        Get.snackbar("Error", "${exception.code}",
+            backgroundColor: Color(0xFF00880D), colorText: Colors.white);
+      }
+    } catch (e) {
+      hasError = true;
+      Get.snackbar("Error", "$e",
+          backgroundColor: Color(0xFF00880D), colorText: Colors.white);
+    } finally {
+      Get.snackbar("Reset Password",
+          "A link has been sent to your email address. \nPlease check the Spam section.",
+          backgroundColor: Color(0xFF00880D), colorText: Colors.white);
     }
   }
 

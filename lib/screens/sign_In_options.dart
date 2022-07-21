@@ -3,10 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:nandu/Services/firebase_auth_config.dart';
 import 'package:nandu/screens/home.dart';
 import 'package:nandu/screens/sign_in_with_otp.dart';
@@ -25,6 +27,146 @@ class _SignInOptionsState extends State<SignInOptions> {
   String facebookEmail = '';
   String facebookNumber = '';
   String facebookName = '';
+
+  final LocalAuthentication auth = LocalAuthentication();
+  _SupportState _supportState = _SupportState.unknown;
+  bool? _canCheckBiometrics;
+  List<BiometricType>? _availableBiometrics;
+  String _authorized = 'Not Authorized';
+  bool _isAuthenticating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    auth.isDeviceSupported().then(
+          (bool isSupported) => setState(() => _supportState = isSupported
+              ? _SupportState.supported
+              : _SupportState.unsupported),
+        );
+    _checkBiometrics();
+    _getAvailableBiometrics();
+    if (BiometricType.face == true || BiometricType.fingerprint == true) {
+      _authenticateWithBiometrics();
+    } else {
+      _authenticate();
+    }
+  }
+
+  Future<void> _checkBiometrics() async {
+    late bool canCheckBiometrics;
+    try {
+      canCheckBiometrics = await auth.canCheckBiometrics;
+    } on PlatformException catch (e) {
+      canCheckBiometrics = false;
+      print(e);
+    }
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _canCheckBiometrics = canCheckBiometrics;
+    });
+  }
+
+  Future<void> _getAvailableBiometrics() async {
+    late List<BiometricType> availableBiometrics;
+    try {
+      availableBiometrics = await auth.getAvailableBiometrics();
+    } on PlatformException catch (e) {
+      availableBiometrics = <BiometricType>[];
+      print(e);
+    }
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _availableBiometrics = availableBiometrics;
+    });
+  }
+
+  Future<void> _authenticate() async {
+    bool authenticated = false;
+    try {
+      setState(() {
+        _isAuthenticating = true;
+        _authorized = 'Authenticating';
+      });
+      authenticated = await auth.authenticate(
+        localizedReason: 'Authenticate with Pin or Password',
+        options: const AuthenticationOptions(
+          useErrorDialogs: true,
+          stickyAuth: true,
+        ),
+      );
+      if (authenticated == false) {
+        SystemNavigator.pop();
+      }
+      setState(() {
+        _isAuthenticating = false;
+      });
+    } on PlatformException catch (e) {
+      print(e);
+      setState(() {
+        _isAuthenticating = false;
+        _authorized = 'Error - ${e.message}';
+      });
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+
+    setState(
+        () => _authorized = authenticated ? 'Authorized' : 'Not Authorized');
+  }
+
+  Future<void> _authenticateWithBiometrics() async {
+    bool authenticated = false;
+    try {
+      setState(() {
+        _isAuthenticating = true;
+        _authorized = 'Authenticating';
+      });
+      authenticated = await auth.authenticate(
+        localizedReason: 'Authenticating with your Fingerprint or FaceID',
+        options: const AuthenticationOptions(
+          useErrorDialogs: true,
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+      if (authenticated == false) {
+        SystemNavigator.pop();
+      }
+      setState(() {
+        _isAuthenticating = false;
+        _authorized = 'Authenticating';
+      });
+    } on PlatformException catch (e) {
+      print(e);
+      setState(() {
+        _isAuthenticating = false;
+        _authorized = 'Error - ${e.message}';
+      });
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+
+    final String message = authenticated ? 'Authorized' : 'Not Authorized';
+    setState(() {
+      _authorized = message;
+    });
+  }
+
+  Future<void> _cancelAuthentication() async {
+    await auth.stopAuthentication();
+    setState(() => _isAuthenticating = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
@@ -327,4 +469,10 @@ class _SignInOptionsState extends State<SignInOptions> {
       ),
     );
   }
+}
+
+enum _SupportState {
+  unknown,
+  supported,
+  unsupported,
 }
