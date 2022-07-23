@@ -189,9 +189,7 @@ class _LoginState extends State<Login> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    height: height10 * 24,
-                  ),
+                  SizedBox(height: height10 * 24),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                         primary: const Color(0xFF00880D),

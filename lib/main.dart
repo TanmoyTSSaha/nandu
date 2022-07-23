@@ -3,10 +3,8 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
-import 'package:nandu/screens/splash_screen.dart';
+import 'package:nandu/screens/google_map.dart';
 import 'package:firebase_core/firebase_core.dart';
-
-import 'screens/home.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +33,8 @@ class MyApp extends StatelessWidget {
               primarySwatch: Colors.blue,
               textTheme: GoogleFonts.poppinsTextTheme(),
             ),
-            home: snapshot.data != null ? const Home() : const SplashScreen(),
+            home:
+                const GoogleMapLoc(), //snapshot.data != null ? const Home() : const SplashScreen(),
           );
         });
   }
