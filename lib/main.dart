@@ -8,6 +8,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:nandu/screens/home.dart';
 import 'package:nandu/screens/search.dart';
 
+import 'screens/splash_screen.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -35,8 +37,7 @@ class MyApp extends StatelessWidget {
               primarySwatch: Colors.blue,
               textTheme: GoogleFonts.poppinsTextTheme(),
             ),
-            home:
-                const Home(), //snapshot.data != null ? const Home() : const SplashScreen(),
+            home: snapshot.data != null ? const Home() : const SplashScreen(),
           );
         });
   }
