@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/foundation/key.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_svg/parser.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
+import 'package:location/location.dart' as lo;
+import 'package:nandu/screens/google_map.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -13,6 +13,38 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  TextEditingController searchController = TextEditingController();
+  lo.LocationData? currentLocation;
+  String? Address;
+
+  @override
+  void initState() {
+    getCurrentLocation();
+    super.initState();
+  }
+
+  Future<void> GetAddressFromLatLong(lo.LocationData? currentLocation) async {
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+        currentLocation!.latitude!, currentLocation.longitude!);
+    Placemark place = placemarks[0];
+    setState(() {
+      Address =
+          '${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}';
+      searchController = TextEditingController(text: Address);
+    });
+  }
+
+  void getCurrentLocation() async {
+    lo.Location location = lo.Location();
+    location.getLocation().then(
+      (location) {
+        setState(() {
+          currentLocation = location;
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,7 +58,7 @@ class _SearchScreenState extends State<SearchScreen> {
           },
           icon: Icon(
             Icons.arrow_back,
-            color: Colors.black,
+            color: Colors.white,
           ),
         ),
         centerTitle: true,
@@ -35,7 +67,7 @@ class _SearchScreenState extends State<SearchScreen> {
           style: TextStyle(
             fontSize: 21,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: Colors.white,
           ),
         ),
       ),
@@ -44,11 +76,37 @@ class _SearchScreenState extends State<SearchScreen> {
           Positioned(
             bottom: 0 - MediaQuery.of(context).viewInsets.bottom,
             child: Container(
+              padding: EdgeInsets.only(top: 125, left: 8, right: 8),
               height: Get.height * 0.825,
               width: Get.width,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(50)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      GetAddressFromLatLong(currentLocation);
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.gps_fixed_rounded),
+                        SizedBox(width: 12),
+                        Text(
+                          "Use current location",
+                          style: TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
               ),
             ),
           ),
@@ -73,6 +131,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextFormField(
+                    controller: searchController,
                     style: TextStyle(
                       fontSize: 21,
                       fontWeight: FontWeight.w400,
@@ -101,6 +160,10 @@ class _SearchScreenState extends State<SearchScreen> {
                     height: 1,
                   ),
                   TextFormField(
+                    // textInputAction: TextInputAction.route,
+                    onFieldSubmitted: (v) {
+                      Get.to(() => GoogleMapLoc());
+                    },
                     style: TextStyle(
                       fontSize: 21,
                       fontWeight: FontWeight.w400,

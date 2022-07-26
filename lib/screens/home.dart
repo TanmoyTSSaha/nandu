@@ -217,7 +217,7 @@ class _HomeState extends State<Home> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
-                                    color: Colors.black,
+                                    color: Color.fromRGBO(255, 255, 255, 1),
                                   ),
                                   children: [
                                     TextSpan(
@@ -225,7 +225,7 @@ class _HomeState extends State<Home> {
                                       style: TextStyle(
                                         fontSize: 21,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.black,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ],

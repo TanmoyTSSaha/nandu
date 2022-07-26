@@ -1,11 +1,15 @@
-import 'dart:async';
-import 'dart:developer';
+import 'dart:ui' as ui;
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'dart:ui' as ui;
+import '../.env.dart';
 
 class GoogleMapLoc extends StatefulWidget {
   const GoogleMapLoc({Key? key}) : super(key: key);
@@ -15,30 +19,75 @@ class GoogleMapLoc extends StatefulWidget {
 }
 
 class _GoogleMapLocState extends State<GoogleMapLoc> {
-  // final Completer<GoogleMapController> mapController = Completer();
-  static const LatLng sourceLocation = LatLng(17.412663, 78.437547);
-  static const LatLng destination = LatLng(17.412165, 78.437453);
-  Map<PolylineId, Polyline> polylines = {};
-  List<LatLng> polylineCoordinates = [
-    LatLng(17.412663, 78.437547),
-    LatLng(17.412165, 78.437453),
-  ];
+  static LatLng destination = const LatLng(
+    17.407354,
+    78.439974,
+  );
+  late BitmapDescriptor cyclesIcon;
+  late BitmapDescriptor currentIcon;
+  late BitmapDescriptor destinationIcon;
   PolylinePoints polylinePoints = PolylinePoints();
-  String google_api_key = "AIzaSyAD3B4_0z0Rnrx6sqqnJ5noAqxv4wTJkIw";
   LocationData? currentLocation;
+  List<LatLng> polylineCoordinates = [];
+  LatLng? selectedPosition;
+  String? distance;
+  bool selectedMarker = false;
 
   @override
   void initState() {
     getCurrentLocation();
-    getPolyPoints();
+    cyclesMarkerIcon();
+    userMarkerIcon();
+    destinationMarkerIcon();
     super.initState();
   }
 
-  void getCurrentLocation() {
+  destinationMarkerIcon() async {
+    final Uint8List destinationMarkerIcon =
+        await getBytesFromAsset('assets/icons/Pin.png', 100);
+    setState(() {
+      destinationIcon = BitmapDescriptor.fromBytes(destinationMarkerIcon);
+    });
+  }
+
+  userMarkerIcon() async {
+    final Uint8List userMarkerIcon =
+        await getBytesFromAsset('assets/icons/profile.png', 200);
+    setState(() {
+      currentIcon = BitmapDescriptor.fromBytes(userMarkerIcon);
+    });
+  }
+
+  cyclesMarkerIcon() async {
+    final Uint8List cyclesMarkerIcon =
+        await getBytesFromAsset('assets/icons/Oval.png', 100);
+    setState(() {
+      cyclesIcon = BitmapDescriptor.fromBytes(cyclesMarkerIcon);
+    });
+  }
+
+  Future<Uint8List> getBytesFromAsset(String path, int width) async {
+    ByteData data = await rootBundle.load(path);
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
+        targetWidth: width);
+    ui.FrameInfo fi = await codec.getNextFrame();
+    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
+        .buffer
+        .asUint8List();
+  }
+
+  int calculateDistance(lat1, lon1, lat2, lon2) {
+    var p = 0.017453292519943295;
+    var a = 0.5 -
+        cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    return (12742 * asin(sqrt(a)) * 1000).toInt();
+  }
+
+  void getCurrentLocation() async {
     Location location = Location();
     location.getLocation().then(
       (location) {
-        log("got location data");
         setState(() {
           currentLocation = location;
         });
@@ -47,12 +96,24 @@ class _GoogleMapLocState extends State<GoogleMapLoc> {
   }
 
   getPolyPoints() async {
+    PolylinePoints polylinePoints = PolylinePoints();
+
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      google_api_key,
-      PointLatLng(sourceLocation.latitude, sourceLocation.longitude),
+      googleAPIKey,
+      PointLatLng(selectedPosition!.latitude, selectedPosition!.longitude),
       PointLatLng(destination.latitude, destination.longitude),
       travelMode: TravelMode.driving,
     );
+
+    if (result.points.isNotEmpty) {
+      setState(() {
+        result.points.forEach((PointLatLng point) {
+          polylineCoordinates.add(
+            LatLng(point.latitude, point.longitude),
+          );
+        });
+      });
+    }
   }
 
   int selectedIndex = 0;
@@ -82,7 +143,7 @@ class _GoogleMapLocState extends State<GoogleMapLoc> {
                         ),
                         polylines: {
                           Polyline(
-                            polylineId: const PolylineId("route"),
+                            polylineId: PolylineId("route"),
                             points: polylineCoordinates,
                             color: const Color(0xFF00880D),
                             width: 10,
@@ -91,151 +152,380 @@ class _GoogleMapLocState extends State<GoogleMapLoc> {
                         markers: {
                           Marker(
                             markerId: const MarkerId("Current Location"),
+                            icon: currentIcon,
                             position: LatLng(
                               currentLocation!.latitude!,
                               currentLocation!.longitude!,
                             ),
                           ),
-                          const Marker(
-                            markerId: MarkerId("source"),
-                            position: sourceLocation,
+                          Marker(
+                            markerId: const MarkerId("Destination"),
+                            icon: destinationIcon,
+                            position: LatLng(
+                              17.407354,
+                              78.439974,
+                            ),
                           ),
-                          const Marker(
-                            markerId: MarkerId("destination"),
-                            position: destination,
+                          Marker(
+                            onTap: selectedMarker == true
+                                ? null
+                                : () {
+                                    setState(() {
+                                      selectedPosition =
+                                          LatLng(17.412663, 78.437547);
+                                      distance = calculateDistance(
+                                        selectedPosition!.latitude,
+                                        selectedPosition!.longitude,
+                                        destination.latitude,
+                                        destination.longitude,
+                                      ).toString();
+
+                                      selectedMarker == true
+                                          ? polylineCoordinates.add(
+                                              LatLng(
+                                                selectedPosition!.latitude,
+                                                selectedPosition!.longitude,
+                                              ),
+                                            )
+                                          : null;
+                                      // sourceLocation = LatLng(
+                                      //   currentLocation!.latitude!,
+                                      //   currentLocation!.longitude!,
+                                      // );
+                                      // destination =
+                                      //     LatLng(17.412663, 78.437547);
+                                    });
+                                  },
+                            visible: !selectedMarker,
+                            icon: cyclesIcon,
+                            markerId: MarkerId("Cycle_1"),
+                            position: LatLng(17.412663, 78.437547),
+                          ),
+                          Marker(
+                            onTap: selectedMarker == true
+                                ? null
+                                : () {
+                                    setState(() {
+                                      selectedPosition =
+                                          LatLng(17.412165, 78.437453);
+                                      distance = calculateDistance(
+                                        selectedPosition!.latitude,
+                                        selectedPosition!.longitude,
+                                        destination.latitude,
+                                        destination.longitude,
+                                      ).toString();
+
+                                      selectedMarker == true
+                                          ? polylineCoordinates.add(
+                                              LatLng(
+                                                selectedPosition!.latitude,
+                                                selectedPosition!.longitude,
+                                              ),
+                                            )
+                                          : null;
+                                    });
+                                  },
+                            visible: !selectedMarker,
+                            icon: cyclesIcon,
+                            markerId: MarkerId("Cycle_2"),
+                            position: LatLng(17.412165, 78.437453),
+                          ),
+                          Marker(
+                            onTap: selectedMarker == true
+                                ? null
+                                : () {
+                                    setState(() {
+                                      selectedPosition =
+                                          LatLng(17.410845, 78.437407);
+                                      distance = calculateDistance(
+                                        selectedPosition!.latitude,
+                                        selectedPosition!.longitude,
+                                        destination.latitude,
+                                        destination.longitude,
+                                      ).toString();
+
+                                      selectedMarker == true
+                                          ? polylineCoordinates.add(
+                                              LatLng(
+                                                selectedPosition!.latitude,
+                                                selectedPosition!.longitude,
+                                              ),
+                                            )
+                                          : null;
+                                    });
+                                  },
+                            visible: !selectedMarker,
+                            icon: cyclesIcon,
+                            markerId: MarkerId("Cycle_3"),
+                            position: LatLng(17.410845, 78.437407),
+                          ),
+                          Marker(
+                            onTap: selectedMarker == true
+                                ? null
+                                : () {
+                                    setState(() {
+                                      selectedPosition =
+                                          LatLng(17.412186, 78.436651);
+                                      distance = calculateDistance(
+                                        selectedPosition!.latitude,
+                                        selectedPosition!.longitude,
+                                        destination.latitude,
+                                        destination.longitude,
+                                      ).toString();
+
+                                      selectedMarker == true
+                                          ? polylineCoordinates.add(
+                                              LatLng(
+                                                selectedPosition!.latitude,
+                                                selectedPosition!.longitude,
+                                              ),
+                                            )
+                                          : null;
+                                    });
+                                  },
+                            visible: !selectedMarker,
+                            icon: cyclesIcon,
+                            markerId: MarkerId("Cycle_4"),
+                            position: LatLng(17.412186, 78.436651),
+                          ),
+                          Marker(
+                            onTap: selectedMarker == true
+                                ? null
+                                : () {
+                                    setState(() {
+                                      selectedPosition =
+                                          LatLng(17.410625, 78.437251);
+                                      distance = calculateDistance(
+                                        selectedPosition!.latitude,
+                                        selectedPosition!.longitude,
+                                        destination.latitude,
+                                        destination.longitude,
+                                      ).toString();
+
+                                      selectedMarker == true
+                                          ? polylineCoordinates.add(
+                                              LatLng(
+                                                selectedPosition!.latitude,
+                                                selectedPosition!.longitude,
+                                              ),
+                                            )
+                                          : null;
+                                    });
+                                  },
+                            visible: !selectedMarker,
+                            icon: cyclesIcon,
+                            markerId: const MarkerId("Cycle_5"),
+                            position: LatLng(17.410625, 78.437251),
                           ),
                         },
                       ),
-                      GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: sourceLocation,
-                          zoom: 13.5,
+                      Center(
+                        child: SvgPicture.asset(
+                          "assets/icons/Lock.svg",
+                          color: const Color(0xFF00880D),
                         ),
-                        polylines: {
-                          Polyline(
-                            polylineId: const PolylineId("route"),
-                            points: polylineCoordinates,
-                            color: const Color(0xFF00880D),
-                            width: 10,
-                          ),
-                        },
-                        markers: {
-                          // Marker(
-                          //   markerId: const MarkerId("Current Location"),
-                          //   position: LatLng(
-                          //     currentLocation!.latitude!,
-                          //     currentLocation!.longitude!,
-                          //   ),
-                          // ),
-                          const Marker(
-                            // icon: BitmapDescriptor.fromAssetImage(
-                            //    empty,
-                            //     "assets/icons/profile.png"),
-                            markerId: MarkerId("source"),
-                            position: sourceLocation,
-                          ),
-                          const Marker(
-                            markerId: MarkerId("destination"),
-                            position: destination,
-                          ),
-                        },
                       ),
-                      GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: sourceLocation,
-                          zoom: 13.5,
+                      Center(
+                        child: SvgPicture.asset(
+                          "assets/icons/settings.svg",
+                          color: const Color(0xFF00880D),
                         ),
-                        polylines: {
-                          Polyline(
-                            polylineId: const PolylineId("route"),
-                            points: polylineCoordinates,
-                            color: const Color(0xFF00880D),
-                            width: 10,
-                          ),
-                        },
-                        markers: {
-                          const Marker(
-                            markerId: MarkerId("source"),
-                            position: sourceLocation,
-                          ),
-                          const Marker(
-                            markerId: MarkerId("destination"),
-                            position: destination,
-                          ),
-                        },
                       ),
+                      // GoogleMap(
+                      //   initialCameraPosition: CameraPosition(
+                      //     target: sourceLocation,
+                      //     zoom: 13.5,
+                      //   ),
+                      //   polylines: {
+                      //     Polyline(
+                      //       polylineId: const PolylineId("route"),
+                      //       points: polylineCoordinates,
+                      //       color: const Color(0xFF00880D),
+                      //       width: 10,
+                      //     ),
+                      //   },
+
+                      //   markers: {
+                      //     const Marker(
+                      //       markerId: MarkerId("source"),
+                      //       position: sourceLocation,
+                      //     ),
+                      //     const Marker(
+                      //       markerId: MarkerId("destination"),
+                      //       position: destination,
+                      //     ),
+                      //   },
+                      // ),
                     ],
                   ),
-                  Positioned(
-                    bottom: 0,
-                    child: Container(
-                      height: 280,
-                      width: Get.width,
-                      child: Stack(
-                        children: [
-                          Positioned(
+                  if (distance != null)
+                    selectedMarker == false
+                        ? Positioned(
+                            bottom: 0,
+                            child: SizedBox(
+                              height: 280,
+                              width: Get.width,
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    bottom: 0,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 20, vertical: 20),
+                                      height: 250,
+                                      width: Get.width,
+                                      color: Color(0xFF00880D),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          RichText(
+                                            textAlign: TextAlign.end,
+                                            text: TextSpan(
+                                              text:
+                                                  "Haibike Sduro FullSeven\nDistance",
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w400,
+                                                color: Colors.white,
+                                              ),
+                                              children: [
+                                                TextSpan(
+                                                  text: " $distance m",
+                                                  style: TextStyle(
+                                                    fontSize: 21,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                selectedMarker = true;
+                                                getPolyPoints();
+                                              });
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              elevation: 0,
+                                              primary: Color(0xFFC7C7CC),
+                                              minimumSize: Size(100, 30),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              "Continue",
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 170,
+                                    left: -40,
+                                    child: Image.asset(
+                                      "assets/images/Bitmap.png",
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : Positioned(
                             bottom: 0,
                             child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 20),
-                              height: 250,
+                              padding:
+                                  EdgeInsets.only(top: 30, right: 16, left: 30),
+                              alignment: Alignment.topCenter,
+                              height: 220,
                               width: Get.width,
-                              color: Color(0xFF00880D),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00880B),
+                                borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(50)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   RichText(
-                                    textAlign: TextAlign.end,
+                                    textAlign: TextAlign.center,
                                     text: TextSpan(
-                                      text: "Haibike Sduro FullSeven\nDistance",
+                                      text: "Per 30 mins\n",
                                       style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w400,
-                                        color: Colors.black,
+                                        fontSize: 13,
+                                        color: Colors.white,
                                       ),
                                       children: [
                                         TextSpan(
-                                          text: " 150 m",
+                                          text: "\$ 0.50",
                                           style: TextStyle(
                                             fontSize: 21,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.black,
+                                            color: Colors.white,
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  ElevatedButton(
-                                    onPressed: () {},
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 0,
-                                      primary: Color(0xFFC7C7CC),
-                                      minimumSize: Size(100, 30),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      "Continue",
+                                  RichText(
+                                    textAlign: TextAlign.center,
+                                    text: TextSpan(
+                                      text: "Distance\n",
                                       style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black,
+                                        fontSize: 13,
+                                        color: Colors.white,
                                       ),
+                                      children: [
+                                        TextSpan(
+                                          text: "$distance m",
+                                          style: TextStyle(
+                                            fontSize: 21,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  RichText(
+                                    textAlign: TextAlign.end,
+                                    text: TextSpan(
+                                      text: "Estimated Time\n",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: int.parse(distance!) > 1000
+                                              ? "10 mins"
+                                              : int.parse(distance!) > 500
+                                                  ? "7.5 mins"
+                                                  : "5 mins",
+                                          style: TextStyle(
+                                            fontSize: 21,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                          Positioned(
-                              bottom: 170,
-                              left: -40,
-                              child: Image.asset("assets/images/Bitmap.png")),
-                        ],
-                      ),
-                    ),
-                  ),
                   Positioned(
                     bottom: 0,
                     child: Container(

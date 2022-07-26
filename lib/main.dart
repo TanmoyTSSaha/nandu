@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:nandu/screens/google_map.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:nandu/screens/home.dart';
+import 'package:nandu/screens/search.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +36,7 @@ class MyApp extends StatelessWidget {
               textTheme: GoogleFonts.poppinsTextTheme(),
             ),
             home:
-                const GoogleMapLoc(), //snapshot.data != null ? const Home() : const SplashScreen(),
+                const Home(), //snapshot.data != null ? const Home() : const SplashScreen(),
           );
         });
   }
