@@ -46,7 +46,7 @@ class FirebaseAuthConfig {
     }
   }
 
-  signInWithGoogle() async {
+  Future signInWithGoogle() async {
     try {
       log("signInWithGoogle Initialized");
       //Trigger the authentication flow
@@ -61,11 +61,18 @@ class FirebaseAuthConfig {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      if (credential.accessToken != null) {
-        Get.offAll(() => const Home());
-      }
+
       //Once signed in, return to the UserCredential.
-      return await FirebaseAuth.instance.signInWithCredential(credential);
+      UserCredential user =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+      if (user.user != null) {
+        log('${googleUser.email} ${googleUser}');
+        await FirebaseAuthConfig().storeData(
+          googleUser.displayName.toString(),
+          googleUser.email.toString(),
+          FirebaseAuth.instance.currentUser!.phoneNumber.toString(),
+        );
+      }
     } catch (e) {
       log(e.toString());
     }
@@ -91,7 +98,11 @@ class FirebaseAuthConfig {
       facebookName = userData['name'];
 
       if (userData != null) {
-        Get.offAll(() => const Home());
+        await FirebaseAuthConfig().storeData(
+          facebookName.toString(),
+          facebookEmail.toString(),
+          FirebaseAuth.instance.currentUser!.phoneNumber.toString(),
+        );
       }
 
       return FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
@@ -127,15 +138,21 @@ class FirebaseAuthConfig {
     }
   }
 
-  storeData(String username, String emailAddress, String phoneNumber) async {
-    await FirebaseFirestore.instance
-        .collection("users")
-        .doc(FirebaseAuth.instance.currentUser!.uid)
-        .set({
-      'uid': FirebaseAuth.instance.currentUser!.uid,
-      'username': username,
-      'emailAddress': emailAddress,
-      'phoneNumber': phoneNumber,
-    });
+  Future storeData(
+      String username, String emailAddress, String phoneNumber) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .set({
+        'uid': FirebaseAuth.instance.currentUser!.uid,
+        'username': username,
+        'emailAddress': emailAddress,
+        'phoneNumber': phoneNumber,
+      });
+      Get.offAll(() => Home());
+    } catch (e) {
+      log(e.toString());
+    }
   }
 }

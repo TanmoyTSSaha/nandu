@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:nandu/screens/google_map.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:nandu/screens/home.dart';
@@ -31,6 +32,10 @@ class MyApp extends StatelessWidget {
             return const CircularProgressIndicator();
           }
           return GetMaterialApp(
+            onInit: () async {
+              // await FirebaseAuth.instance.signOut();
+              // await GoogleSignIn().signOut();
+            },
             debugShowCheckedModeBanner: false,
             title: 'Nandu',
             theme: ThemeData(

@@ -81,16 +81,17 @@ class _SignInWithOTPState extends State<SignInWithOTP> {
                       if (phoneNumber!.isEmpty) {
                         return "Mobile number cannot be empty";
                       }
-                      if (phoneNumber.length < 10) {
-                        return "Please enter a valid mobile number";
-                      } else {
+                       else {
                         return null;
                       }
                     },
+                    maxLength: 10,
+
                     controller: phoneNumberController,
                     keyboardType: TextInputType.number,
                     autocorrect: false,
                     decoration: InputDecoration(
+                      counterText: null,
                       prefixIcon: const Icon(
                         Icons.phone_android_rounded,
                         color: Color(0xFFC2C2C2),

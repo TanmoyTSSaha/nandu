@@ -347,14 +347,7 @@ class _SignInOptionsState extends State<SignInOptions> {
                           minimumSize: Size(height10 * 33.5, height10 * 4.8)),
                       onPressed: () async {
                         log("Log in with Google TAPPED!");
-                        FirebaseAuthConfig().signInWithGoogle();
-                        FirebaseAuthConfig().storeData(
-                          FirebaseAuth.instance.currentUser!.displayName
-                              .toString(),
-                          FirebaseAuth.instance.currentUser!.email.toString(),
-                          FirebaseAuth.instance.currentUser!.phoneNumber
-                              .toString(),
-                        );
+                        await FirebaseAuthConfig().signInWithGoogle();
                       },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -387,8 +380,6 @@ class _SignInOptionsState extends State<SignInOptions> {
                         log("Facebook Login TAPPED!");
                         FirebaseAuthConfig()
                             .signInWithFacebook(facebookEmail, facebookName);
-                        FirebaseAuthConfig().storeData(facebookName.toString(),
-                            facebookEmail.toString(), "null");
                       },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
