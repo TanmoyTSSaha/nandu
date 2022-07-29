@@ -135,14 +135,20 @@ class _SearchScreenState extends State<SearchScreen> {
                             right: 20,
                             bottom: 10,
                           ),
-                          child: Text(
-                            suggestions[index],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.black,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 10.0),
+                            child: InkWell(
+                              onTap: () {},
+                              child: Text(
+                                suggestions[index],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.black,
+                                ),
+                              ),
                             ),
                           ),
                         );
@@ -223,14 +229,15 @@ class _SearchScreenState extends State<SearchScreen> {
                   TextFormField(
                     controller: searchDestinationController,
                     onChanged: (val) async {
+                      if(val == null ) {
+                        setState(() {
+                          suggestions = [];
+                        });
+                      }
                       String places = await LocationService().getPlace(val);
                       setState(() {
                         suggestions.add(places);
                       });
-                    },
-                    onFieldSubmitted: (v) {
-                      // LocationService()
-                      //     .getPlace(searchDestinationController.text);
                     },
                     style: TextStyle(
                       fontSize: 16,

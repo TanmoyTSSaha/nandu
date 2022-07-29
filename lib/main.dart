@@ -12,6 +12,7 @@ import 'package:nandu/screens/search.dart';
 import 'screens/splash_screen.dart';
 
 Future<void> main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -32,6 +33,7 @@ class MyApp extends StatelessWidget {
             return const CircularProgressIndicator();
           }
           return GetMaterialApp(
+
             onInit: () async {
               // await FirebaseAuth.instance.signOut();
               // await GoogleSignIn().signOut();

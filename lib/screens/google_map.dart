@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:nandu/screens/scanner.dart';
 import 'dart:ui' as ui;
 import '../.env.dart';
 
@@ -515,12 +516,7 @@ class _GoogleMapLocState extends State<GoogleMapLoc> {
                                 ),
                       ],
                     ),
-                    Center(
-                      child: SvgPicture.asset(
-                        "assets/icons/Lock.svg",
-                        color: const Color(0xFF00880D),
-                      ),
-                    ),
+                    Scanner(),
                     Center(
                       child: SvgPicture.asset(
                         "assets/icons/settings.svg",
