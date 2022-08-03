@@ -144,7 +144,7 @@ class _CalculationState extends State<Calculation> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.oil_barrel_outlined),
+                        Icon(Icons.liquor_outlined),
                         SizedBox(height: 10),
                         Text(
                           "${ltrOfOil(int.parse(receipts.text.isNotEmpty ? receipts.text : "0"))}\nLTR(S) OF OIL",

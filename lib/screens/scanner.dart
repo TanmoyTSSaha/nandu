@@ -1,11 +1,9 @@
 import 'dart:developer';
-import 'dart:ffi';
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/foundation/key.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class Scanner extends StatefulWidget {
   const Scanner({Key? key}) : super(key: key);
@@ -44,14 +42,7 @@ class _ScannerState extends State<Scanner> {
     }
   }
 
-  // void readQr() async {
-  //   if (result != null) {
-  //     controller!.pauseCamera();
-  //     log(result!.code.toString());
-  //     controller!.dispose();
-  //   }
-  // }
-    void _onPermissionSet(BuildContext context, QRViewController ctrl, bool p) {
+  void _onPermissionSet(BuildContext context, QRViewController ctrl, bool p) {
     log('${DateTime.now().toIso8601String()}_onPermissionSet $p');
     if (!p) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,8 +56,7 @@ class _ScannerState extends State<Scanner> {
     return QRView(
       key: qrkey,
       cameraFacing: CameraFacing.back,
-      onPermissionSet:(cntl, p) => _onPermissionSet(context, cntl, p),
-      
+      onPermissionSet: (cntl, p) => _onPermissionSet(context, cntl, p),
       onQRViewCreated: _onQRViewCreated,
       overlay: QrScannerOverlayShape(
         borderColor: const Color(0xFF00880B),
@@ -80,10 +70,30 @@ class _ScannerState extends State<Scanner> {
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
-          setState(() {
-      result = scanData;
-    });
+    controller.resumeCamera();
+    controller.scannedDataStream.listen((scanData) async {
+      setState(() async {
+        result = scanData;
+        log(scanData.toString());
+        controller.pauseCamera();
+        if (await canLaunchUrlString(scanData.code!)) {
+          log(scanData.code.toString());
+          await launchUrlString(scanData.code!);
+          Get.snackbar(
+            "QR Code",
+            "${scanData.code}",
+            backgroundColor: Color(0xFF00880B),
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar("QR Code", "${scanData.code}",
+              backgroundColor: Color(0xFF00880B),
+              colorText: Colors.white,
+              duration: Duration(seconds: 5));
+          throw "Could not launch ${scanData.code}";
+        }
+      });
+      controller.resumeCamera();
     });
   }
 
